@@ -1,0 +1,35 @@
+{
+    "name": "mainComponent",
+    "private": true,
+    "version": "0.0.1",
+    "type": "module",
+    "main": "./index.d.ts",
+    "scripts": {
+        "build:css": "npx tailwindcss -i ./index.css -o ./dist/style.css --minify"
+    },
+    "exports": {
+        ".": "./index.d.ts",
+        "./dist/style.css": "./dist/style.css",
+        "./src/*": "./src/*"
+    },
+
+    "peerDependencies": {
+        "@mui/icons-material": "^5.11.0",
+        "@mui/material": "^5.11.6",
+        "@mui/x-date-pickers": "^7.7.1",
+        "@tanstack/react-table": "^8.9.3",
+        "axios": "^1.9.0",
+        "date-fns": "^2.0.0-alpha.27",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "react-router-dom": "^6.16.0"
+    },
+    "dependencies": {
+        "dayjs": "^1.11.20",
+        "formik": "^2.2.9"
+    },
+    "devDependencies": {
+        "@types/node": "^25.6.0",
+        "tailwindcss": "^3.3.3"
+    }
+}
