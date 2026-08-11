@@ -10,7 +10,7 @@ import dayjs from 'dayjs';
 import { useField } from "formik";
 import React, { Fragment, HtmlHTMLAttributes, useEffect, useMemo, useRef, useState } from "react";
 import { getMonthName } from "../utils/dateFormatter";
-import { useFetchSelectContent } from "./hooks/useFetchSelectContent";
+import { useFetchSelectContent, useMultiFetchSelectContent } from "./hooks/useFetchSelectContent";
 
 export const DynamicDateList = ({
     dates,
@@ -232,32 +232,13 @@ export const DebouncedInput = ({
     const [value, setValue] = useState(initialValue);
 
     const isFirstRender = useRef(true);
-    // const lastSentValueRef = useRef(initialValue);
-
-    // useEffect(() => {
-    //     if (initialValue !== lastSentValueRef.current) {
-    //         setValue(initialValue);
-    //         lastSentValueRef.current = initialValue;
-    //     }
-    // }, [initialValue]);
-
-    // useEffect(() => {
-    //     if (value === initialValue) return;
-
-    //     const timeout = setTimeout(() => {
-    //         lastSentValueRef.current = value;
-    //         onChange(value);
-    //     }, debounce);
-
-    //     return () => clearTimeout(timeout);
-    // }, [value, debounce, onChange, initialValue]);
 
     useEffect(() => {
         if (isFirstRender.current) {
             isFirstRender.current = false;
-            return; // Пропускаем первый рендер, так как стейт уже равен initialValue
+            return;
         }
-        setValue(initialValue ?? '');
+        setValue(initialValue);
     }, [initialValue]);
 
     useEffect(() => {
@@ -272,7 +253,6 @@ export const DebouncedInput = ({
     }, [value, debounce, onChange]);
 
     const handleClear = () => {
-        // lastSentValueRef.current = '';
         setValue('');
         onChange('');
     };
@@ -304,7 +284,6 @@ export const DebouncedInput = ({
                         </InputAdornment>
                     )
                 }}
-                // onChange={(e)=>{setValue(e.target.value); onChange(e.target.value)}}
                 onChange={(e)=>{setValue(e.target.value)}}
                 sx={{
                     minWidth: 0,
@@ -466,6 +445,81 @@ export const DynamicSelect = ({
             
         </FormControl>
     )
+};
+
+export const NativeDynamicSelect = ({
+    contentApi,
+    value: initialValue,
+    onChange,
+    params,
+    placeholder,
+    emptyMenu = true,
+    defaulValue = '',
+    selectFirst = false,
+    ...props
+}: DynamicSelectProps & HtmlHTMLAttributes<HTMLSelectElement>) => {
+    
+    const fetchParams = useMemo(() => (params), [JSON.stringify(params)]);
+    const { content, loadingContent } = useMultiFetchSelectContent<any>(contentApi, fetchParams);
+    const [selectedItem, setSelectedItem] = useState(initialValue);
+
+    const selectRef = useRef<HTMLSelectElement>(null);
+    useEffect(() => {
+        if (!loadingContent && selectRef.current) {
+            selectRef.current?.focus();
+        }
+    }, [loadingContent, selectRef]);
+
+    useEffect(() => {
+        setSelectedItem(initialValue);
+    }, [initialValue]);
+
+    useEffect(() => {
+        if (!content || content.length === 0) return;
+        if (selectFirst && content[0].id) {
+            onChange(content[0].id);           
+            setSelectedItem(content[0].id);
+        } else if (selectedItem !== undefined && selectedItem !== null && selectedItem !== '') {
+            const isItemInList = content.some(item => String(item.id) === String(selectedItem));
+            if (!isItemInList) {
+                onChange(defaulValue);           
+                setSelectedItem(defaulValue);
+            }
+        }
+    }, [content]);
+
+    const currentValue = content.some(item => String(item.id) === String(selectedItem)) ? selectedItem : defaulValue;
+
+    return (
+        <div className="inline-flex flex-col relative w-full">
+            <select
+                id={props.id}
+                name={props.id}
+                value={currentValue}
+                disabled={props.disabled || loadingContent}
+                ref={selectRef}
+                onChange={(e) => {
+                    const val = e.target.value;
+                    onChange(String(val));
+                    setSelectedItem(val);
+                }}
+                onBlur={props.onBlur}
+                onInput={props.onBlur}
+            >
+                {emptyMenu && (
+                    <option value="">
+                        {placeholder}
+                    </option>
+                )}
+                
+                {content.map(item => (
+                    <option key={item.id} value={item.id}>
+                        {item.nm}
+                    </option>
+                ))}
+            </select>
+        </div>
+    );
 };
 
 export const DynamicParamSelect = ({
@@ -872,7 +926,7 @@ export const ParameterSelector = ({items = [ {id: "createDateRange", label: "Д�
                 {
                     items.map((item) => {
                         return (
-                            <ToggleButton value={item.id} sx={{justifyContent: "flex-start", textAlign: 'left', color: 'black'}}>
+                            <ToggleButton key={item.id} value={item.id} sx={{justifyContent: "flex-start", textAlign: 'left', color: 'black'}}>
                                 <DateRange sx={{ mr: 1, fontSize: 18 }} />
                                 {item.label}
                             </ToggleButton>
