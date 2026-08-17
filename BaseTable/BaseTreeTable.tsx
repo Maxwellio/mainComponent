@@ -5,6 +5,7 @@ import { useFetchData } from "../BaseTable/hooks/useFetchTreeData";
 import { DebouncedInput, DynamicDatePicker, DynamicSelect } from "../Input/InputComponents";
 import { FILTER_TYPES } from "../utils/types";
 import { ColumnFilter } from "./BaseTable";
+import { useResettableRowSelection } from "./hooks/useResettableRowSelection";
 
 interface BaseTreeTableProps<TData> extends Partial<TableOptions<TData>>{
     url: string;
@@ -23,6 +24,7 @@ interface BaseTreeTableProps<TData> extends Partial<TableOptions<TData>>{
 export const BaseTreeTable = <TData,>({url, columns, filters, setFilters, setSelectedId, setSelectedCol, setIsLeaf, defColumnVisibility, reRenderSignal, disabled=false, ...props}: BaseTreeTableProps<TData>) =>{
     const {data, loading, setData, fetchChildren} = useFetchData<TData>(url, filters || [], reRenderSignal);
     const [expanded, setExpanded] = useState({});
+    const [rowSelection, setRowSelection] = useResettableRowSelection(reRenderSignal);
     const [selectedRowId, setSelectedRowId] = useState(null);
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(defColumnVisibility || {})
     const [columnSizing, setColumnSizing] = useState(() => {
@@ -34,10 +36,12 @@ export const BaseTreeTable = <TData,>({url, columns, filters, setFilters, setSel
         columns,
         state: {
             expanded,
+            rowSelection,
             columnVisibility,
             columnFilters : filters,
             columnSizing: columnSizing,
         },
+        onRowSelectionChange: setRowSelection,
         defaultColumn: {
             enableColumnFilter: false, 
             size: 150,    // Размер по умолчанию, если не указан в columnDef

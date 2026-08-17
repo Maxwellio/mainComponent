@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState, useTransition } from "reac
 import { DebouncedInput, DynamicDatePicker, DynamicSelect } from "../Input/InputComponents";
 import { FILTER_TYPES } from "../utils/types";
 import { useFetchData } from "./hooks/useFetchData";
+import { useResettableRowSelection } from "./hooks/useResettableRowSelection";
 
 export interface ColumnFilter<TData>{
     id: string
@@ -29,7 +30,7 @@ interface BaseTableProps<TData> extends Partial<TableOptions<TData>>{
 export const BaseTable = <TData,>({url, columns, filters, setFilters, defColumnFilters, defColumnVisibility, setSelectedId, handleDoubleClick, setSelectedCol, pageable=false, disabled=false, reRenderSignal, org, ...props}: BaseTableProps<TData>) =>{
     const [sorting, setSorting] = useState<SortingState>([]);
     const {data, total, loading, pagination, hasMore, totalElements, setPagination, setData} = useFetchData<TData>(url, filters || [], pageable, reRenderSignal);
-    const [rowSelection, setRowSelection] = useState({});
+    const [rowSelection, setRowSelection] = useResettableRowSelection(reRenderSignal);
     const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(defColumnVisibility || {})
     const [activeGroup, setActiveGroup] = useState(null);
     const observerTarget = useRef<HTMLDivElement>()
